@@ -13,6 +13,7 @@
       - minio
     state: present
     extra_args: --upgrade
+    break_system_packages: true
   register: package_install
   until: package_install is succeeded
 

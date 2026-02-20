@@ -4,20 +4,29 @@
   set_fact:
     _minio_server_download_url: "{{ minio_download_url }}/minio.{{ minio_release }}"
 
-- name: Get the Minio server checksum on controller without proxy
+- name: Fetch Minio server checksum on controller without proxy
   delegate_to: localhost
   run_once: true
   environment:
     http_proxy: ""
     https_proxy: ""
     no_proxy: ""
-  set_fact:
-    _minio_server_checksum: "{{ lookup('url', _minio_server_download_url + '.sha256sum').split(' ')[0] }}"
+  uri:
+    url: "{{ _minio_server_download_url }}.sha256sum"
+    return_content: true
+  register: _minio_server_checksum_fetch
   when: minio_controller_disable_proxy | default(false) | bool
 
-- name: Set Minio server checksum from controller
+- name: Set Minio server checksum on controller from fetch
+  delegate_to: localhost
+  run_once: true
   set_fact:
-    _minio_server_checksum: "{{ hostvars[minio_controller_inventory_hostname]['_minio_server_checksum'] }}"
+    _minio_server_checksum: "{{ _minio_server_checksum_fetch.content.strip().split()[0] }}"
+  when: minio_controller_disable_proxy | default(false) | bool
+
+- name: Set Minio server checksum from controller fetch
+  set_fact:
+    _minio_server_checksum: "{{ hostvars[ansible_play_hosts_all[0]]['_minio_server_checksum'] }}"
   when: minio_controller_disable_proxy | default(false) | bool
 
 - name: Get the Minio server checksum for architecture {{ go_arch }} and release {{ minio_release }}
