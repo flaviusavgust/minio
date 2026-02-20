@@ -74,3 +74,9 @@ minio_alias: "myminio"
 # Prometheus bearer token
 minio_prometheus_bearer_token: false
 prometheus_bearer_token_output: "{{ minio_etc_dir }}/prometheus_bearer.json"
+
+# When true, checksum lookups (which run on the controller) use no proxy.
+# Set to true when the controller (e.g. Mac) cannot reach the target's proxy.
+minio_controller_disable_proxy: false
+# Inventory hostname of the controller (for copying facts from delegate_to: localhost).
+minio_controller_inventory_hostname: "localhost"

@@ -4,9 +4,26 @@
   set_fact:
     _minio_client_download_url: "https://dl.minio.io/client/mc/release/linux-{{ go_arch }}/mc"
 
+- name: Get the Minio client checksum on controller without proxy
+  delegate_to: localhost
+  run_once: true
+  environment:
+    http_proxy: ""
+    https_proxy: ""
+    no_proxy: ""
+  set_fact:
+    _minio_client_checksum: "{{ lookup('url', _minio_client_download_url + '.sha256sum').split(' ')[0] }}"
+  when: minio_controller_disable_proxy | default(false) | bool
+
+- name: Set Minio client checksum from controller
+  set_fact:
+    _minio_client_checksum: "{{ hostvars[minio_controller_inventory_hostname]['_minio_client_checksum'] }}"
+  when: minio_controller_disable_proxy | default(false) | bool
+
 - name: Get the Minio client checksum for architecture {{ go_arch }}
   set_fact:
     _minio_client_checksum: "{{ lookup('url', _minio_client_download_url + '.sha256sum').split(' ')[0] }}"
+  when: not (minio_controller_disable_proxy | default(false) | bool)
 
 - name: Download the Minio client
   get_url:
