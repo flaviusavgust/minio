@@ -11,22 +11,14 @@
     http_proxy: ""
     https_proxy: ""
     no_proxy: ""
-  uri:
-    url: "{{ _minio_server_download_url }}.sha256sum"
-    return_content: true
+  shell: "curl -fsSL '{{ _minio_server_download_url }}.sha256sum'"
   register: _minio_server_checksum_fetch
-  when: minio_controller_disable_proxy | default(false) | bool
-
-- name: Set Minio server checksum on controller from fetch
-  delegate_to: localhost
-  run_once: true
-  set_fact:
-    _minio_server_checksum: "{{ _minio_server_checksum_fetch.content.strip().split()[0] }}"
+  changed_when: false
   when: minio_controller_disable_proxy | default(false) | bool
 
 - name: Set Minio server checksum from controller fetch
   set_fact:
-    _minio_server_checksum: "{{ hostvars[ansible_play_hosts_all[0]]['_minio_server_checksum'] }}"
+    _minio_server_checksum: "{{ hostvars[ansible_play_hosts_all[0]]['_minio_server_checksum_fetch'].stdout.strip().split()[0] }}"
   when: minio_controller_disable_proxy | default(false) | bool
 
 - name: Get the Minio server checksum for architecture {{ go_arch }} and release {{ minio_release }}
